@@ -1,0 +1,369 @@
+/*==============================================================*/
+/* DBMS name:      ORACLE Version 11g                           */
+/* Created on:     2016-01-22 00:16:02                          */
+/*==============================================================*/
+
+
+
+-- Type package declaration
+create or replace package PDTypes  
+as
+    TYPE ref_cursor IS REF CURSOR;
+end;
+
+-- Integrity package declaration
+create or replace package IntegrityPackage AS
+ procedure InitNestLevel;
+ function GetNestLevel return number;
+ procedure NextNestLevel;
+ procedure PreviousNestLevel;
+ end IntegrityPackage;
+/
+
+-- Integrity package definition
+create or replace package body IntegrityPackage AS
+ NestLevel number;
+
+-- Procedure to initialize the trigger nest level
+ procedure InitNestLevel is
+ begin
+ NestLevel := 0;
+ end;
+
+
+-- Function to return the trigger nest level
+ function GetNestLevel return number is
+ begin
+ if NestLevel is null then
+     NestLevel := 0;
+ end if;
+ return(NestLevel);
+ end;
+
+-- Procedure to increase the trigger nest level
+ procedure NextNestLevel is
+ begin
+ if NestLevel is null then
+     NestLevel := 0;
+ end if;
+ NestLevel := NestLevel + 1;
+ end;
+
+-- Procedure to decrease the trigger nest level
+ procedure PreviousNestLevel is
+ begin
+ NestLevel := NestLevel - 1;
+ end;
+
+ end IntegrityPackage;
+/
+
+
+drop trigger "CompoundDeleteTrigger_mcp_pane"
+/
+
+drop trigger "CompoundInsertTrigger_mcp_pane"
+/
+
+drop trigger "CompoundUpdateTrigger_mcp_pane"
+/
+
+drop trigger "tib_mcp_panel_acl_user"
+/
+
+alter table "mcp_panel_acl_entry"
+   drop constraint FK_MCP_PANE_ACL_OBJET_MCP_PANE
+/
+
+alter table "mcp_panel_acl_entry"
+   drop constraint FK_MCP_PANE_SID_MCP_PANE
+/
+
+alter table "mcp_panel_acl_object_identity"
+   drop constraint FK_MCP_PANE_OBJECT_ID_MCP_PANE
+/
+
+alter table "mcp_panel_acl_object_identity"
+   drop constraint FK_MCP_PANE_OWNER_SID_MCP_PANE
+/
+
+alter table "mcp_panel_acl_object_identity"
+   drop constraint FK_MCP_PANE_PARENT_OB_MCP_PANE
+/
+
+alter table "mcp_panel_acl_user_sid"
+   drop constraint FK_MCP_PANE_MCP_PANEL_MCP_PANE
+/
+
+alter table "mcp_panel_acl_user_sid"
+   drop constraint FK_MCP_PANE_TEST_MCP_PANE
+/
+
+drop table "mcp_panel_acl_class" cascade constraints
+/
+
+drop index "sid_FK"
+/
+
+drop index "acl_objet_idendityt_FK"
+/
+
+drop table "mcp_panel_acl_entry" cascade constraints
+/
+
+drop table "mcp_panel_acl_object_identity" cascade constraints
+/
+
+drop table "mcp_panel_acl_sid" cascade constraints
+/
+
+drop table "mcp_panel_acl_user" cascade constraints
+/
+
+drop table "mcp_panel_acl_user_sid" cascade constraints
+/
+
+drop sequence "seq_acl_user1"
+/
+
+create sequence "seq_acl_user1"
+increment by 1
+start with 0
+ maxvalue 9999999999999999999
+ minvalue 0
+ cache 1
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_class"                                 */
+/*==============================================================*/
+create table "mcp_panel_acl_class" 
+(
+   "acl_class_id"       INTEGER              not null,
+   "className"          CHAR(100)            not null,
+   constraint PK_MCP_PANEL_ACL_CLASS primary key ("acl_class_id")
+)
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_entry"                                 */
+/*==============================================================*/
+create table "mcp_panel_acl_entry" 
+(
+   "acl_entry_id"       INTEGER              not null,
+   "sid_id"             INTEGER,
+   "acl_object_identity_id" INTEGER,
+   "ace_order"          INTEGER              not null,
+   "mask"               INTEGER              not null,
+   "granting"           INTEGER              not null,
+   "audit_success"      INTEGER              not null,
+   "audit_failure"      INTEGER              not null,
+   constraint PK_MCP_PANEL_ACL_ENTRY primary key ("acl_entry_id")
+)
+/
+
+/*==============================================================*/
+/* Index: "acl_objet_idendityt_FK"                              */
+/*==============================================================*/
+create index "acl_objet_idendityt_FK" on "mcp_panel_acl_entry" (
+   "acl_object_identity_id" ASC
+)
+/
+
+/*==============================================================*/
+/* Index: "sid_FK"                                              */
+/*==============================================================*/
+create index "sid_FK" on "mcp_panel_acl_entry" (
+   "sid_id" ASC
+)
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_object_identity"                       */
+/*==============================================================*/
+create table "mcp_panel_acl_object_identity" 
+(
+   "acl_object_identity_id" INTEGER              not null,
+   "acl_sid_id"         INTEGER              not null,
+   "mcp_acl_object_identity_id" INTEGER,
+   "object_class_id"    INTEGER,
+   "object_id_identity" INTEGER              not null,
+   "entries_inheriting" INTEGER              not null,
+   constraint PK_MCP_PANEL_ACL_OBJECT_IDENTI primary key ("acl_object_identity_id")
+)
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_sid"                                   */
+/*==============================================================*/
+create table "mcp_panel_acl_sid" 
+(
+   "acl_sid_id"         INTEGER              not null,
+   "principal"          INTEGER              not null,
+   "sid"                CHAR(30)             not null,
+   constraint PK_MCP_PANEL_ACL_SID primary key ("acl_sid_id")
+)
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_user"                                  */
+/*==============================================================*/
+create table "mcp_panel_acl_user" 
+(
+   "acl_user_id"        INTEGER              not null,
+   "username"           CHAR(30)             not null,
+   constraint PK_MCP_PANEL_ACL_USER primary key ("acl_user_id")
+)
+/
+
+/*==============================================================*/
+/* Table: "mcp_panel_acl_user_sid"                              */
+/*==============================================================*/
+create table "mcp_panel_acl_user_sid" 
+(
+   "user_id"            INTEGER              not null,
+   "sid_id"             INTEGER              not null,
+   constraint PK_MCP_PANEL_ACL_USER_SID primary key ("user_id", "sid_id")
+)
+/
+
+alter table "mcp_panel_acl_entry"
+   add constraint FK_MCP_PANE_ACL_OBJET_MCP_PANE foreign key ("acl_object_identity_id")
+      references "mcp_panel_acl_object_identity" ("acl_object_identity_id")
+/
+
+alter table "mcp_panel_acl_entry"
+   add constraint FK_MCP_PANE_SID_MCP_PANE foreign key ("sid_id")
+      references "mcp_panel_acl_sid" ("acl_sid_id")
+/
+
+alter table "mcp_panel_acl_object_identity"
+   add constraint FK_MCP_PANE_OBJECT_ID_MCP_PANE foreign key ("object_class_id")
+      references "mcp_panel_acl_class" ("acl_class_id")
+/
+
+alter table "mcp_panel_acl_object_identity"
+   add constraint FK_MCP_PANE_OWNER_SID_MCP_PANE foreign key ("acl_sid_id")
+      references "mcp_panel_acl_sid" ("acl_sid_id")
+/
+
+alter table "mcp_panel_acl_object_identity"
+   add constraint FK_MCP_PANE_PARENT_OB_MCP_PANE foreign key ("mcp_acl_object_identity_id")
+      references "mcp_panel_acl_object_identity" ("acl_object_identity_id")
+/
+
+alter table "mcp_panel_acl_user_sid"
+   add constraint FK_MCP_PANE_MCP_PANEL_MCP_PANE foreign key ("user_id")
+      references "mcp_panel_acl_user" ("acl_user_id")
+/
+
+alter table "mcp_panel_acl_user_sid"
+   add constraint FK_MCP_PANE_TEST_MCP_PANE foreign key ("sid_id")
+      references "mcp_panel_acl_sid" ("acl_sid_id")
+/
+
+
+create or replace trigger "CompoundDeleteTrigger_mcp_pane"
+for delete on "mcp_panel_acl_user" compound trigger
+// Declaration
+// Body
+  before statement is
+  begin
+     NULL;
+  end before statement;
+
+  before each row is
+  begin
+     NULL;
+  end before each row;
+
+  after each row is
+  begin
+     NULL;
+  end after each row;
+
+  after statement is
+  begin
+     NULL;
+  end after statement;
+
+END
+/
+
+
+create or replace trigger "CompoundInsertTrigger_mcp_pane"
+for insert on "mcp_panel_acl_user" compound trigger
+// Declaration
+// Body
+  before statement is
+  begin
+     NULL;
+  end before statement;
+
+  before each row is
+  begin
+     NULL;
+  end before each row;
+
+  after each row is
+  begin
+     NULL;
+  end after each row;
+
+  after statement is
+  begin
+     NULL;
+  end after statement;
+
+END
+/
+
+
+create or replace trigger "CompoundUpdateTrigger_mcp_pane"
+for update on "mcp_panel_acl_user" compound trigger
+// Declaration
+// Body
+  before statement is
+  begin
+     NULL;
+  end before statement;
+
+  before each row is
+  begin
+     NULL;
+  end before each row;
+
+  after each row is
+  begin
+     NULL;
+  end after each row;
+
+  after statement is
+  begin
+     NULL;
+  end after statement;
+
+END
+/
+
+
+create trigger "tib_mcp_panel_acl_user" before insert
+on "mcp_panel_acl_user" for each row
+declare
+    integrity_error  exception;
+    errno            integer;
+    errmsg           char(200);
+    dummy            integer;
+    found            boolean;
+
+begin
+    --  Column ""acl_user_id"" uses sequence seq_acl_user1
+    select seq_acl_user1.NEXTVAL INTO :new."acl_user_id" from dual;
+
+--  Errors handling
+exception
+    when integrity_error then
+       raise_application_error(errno, errmsg);
+end;
+/
+
